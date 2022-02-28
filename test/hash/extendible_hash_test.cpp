@@ -3,6 +3,7 @@
  */
 
 #include <thread>
+#include <iostream>
 
 #include "hash/extendible_hash.h"
 #include "gtest/gtest.h"
@@ -13,7 +14,6 @@ TEST(ExtendibleHashTest, SampleTest) {
   // set leaf size as 2
   ExtendibleHash<int, std::string> *test =
       new ExtendibleHash<int, std::string>(2);
-
   // insert several key/value pairs
   test->Insert(1, "a");
   test->Insert(2, "b");

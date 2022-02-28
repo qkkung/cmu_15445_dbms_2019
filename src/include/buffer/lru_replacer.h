@@ -8,7 +8,7 @@
  */
 
 #pragma once
-
+#include <mutex>
 #include "buffer/replacer.h"
 #include "hash/extendible_hash.h"
 
@@ -31,6 +31,25 @@ public:
 
 private:
   // add your member variables here
+  struct DLinkedNode {
+    DLinkedNode(T val) :value(val) {};
+    ~DLinkedNode() {}
+
+    T value;
+    std::shared_ptr<DLinkedNode> pre;
+    std::shared_ptr<DLinkedNode> next;
+  };
+
+  void insertAtHead(const T& ptr);
+  bool erase(const T& value);
+
+  std::shared_ptr<DLinkedNode> head;
+  std::shared_ptr<DLinkedNode> tail;
+
+  std::map<T, std::shared_ptr<DLinkedNode>> index;
+  int size;
+
+  std::mutex mutex;
 };
 
 } // namespace cmudb
