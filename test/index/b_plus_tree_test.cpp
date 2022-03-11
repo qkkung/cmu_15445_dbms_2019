@@ -42,6 +42,7 @@ TEST(BPlusTreeTests, InsertTest1) {
     index_key.SetFromInteger(key);
     tree.Insert(index_key, rid, transaction);
   }
+  LOG_DEBUG("InsertTest1 Insert() finished===============");
 
   std::vector<RID> rids;
   for (auto key : keys) {
@@ -53,6 +54,7 @@ TEST(BPlusTreeTests, InsertTest1) {
     int64_t value = key & 0xFFFFFFFF;
     EXPECT_EQ(rids[0].GetSlotNum(), value);
   }
+  LOG_DEBUG("InsertTest1 GetValue() finished===============");
 
   int64_t start_key = 1;
   int64_t current_key = start_key;
@@ -64,6 +66,7 @@ TEST(BPlusTreeTests, InsertTest1) {
     EXPECT_EQ(location.GetSlotNum(), current_key);
     current_key = current_key + 1;
   }
+  LOG_DEBUG("InsertTest1 Interate() finished===============");
 
   EXPECT_EQ(current_key, keys.size() + 1);
 
@@ -73,6 +76,7 @@ TEST(BPlusTreeTests, InsertTest1) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+  LOG_DEBUG("InsertTest1 finished===============");
 }
 
 TEST(BPlusTreeTests, InsertTest2) {
@@ -107,7 +111,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   for (auto key : keys) {
     rids.clear();
     index_key.SetFromInteger(key);
-    tree.GetValue(index_key, rids);
+    tree.GetValue(index_key, rids, transaction);
     EXPECT_EQ(rids.size(), 1);
 
     int64_t value = key & 0xFFFFFFFF;
@@ -120,10 +124,12 @@ TEST(BPlusTreeTests, InsertTest2) {
   for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
        ++iterator) {
     auto location = (*iterator).second;
+    //LOG_DEBUG("iterator key=%ld", (*iterator).first.ToString());
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
     current_key = current_key + 1;
   }
+  //LOG_DEBUG("InsertTest2 Interate() 1 finished===============");
 
   EXPECT_EQ(current_key, keys.size() + 1);
 
@@ -133,10 +139,12 @@ TEST(BPlusTreeTests, InsertTest2) {
   for (auto iterator = tree.Begin(index_key); iterator.isEnd() == false;
        ++iterator) {
     auto location = (*iterator).second;
+    //LOG_DEBUG("iterator key=%ld", (*iterator).first.ToString());
     EXPECT_EQ(location.GetPageId(), 0);
     EXPECT_EQ(location.GetSlotNum(), current_key);
     current_key = current_key + 1;
   }
+  //LOG_DEBUG("InsertTest2 Interate() 2 finished===============");
 
   bpm->UnpinPage(HEADER_PAGE_ID, true);
   delete transaction;
@@ -144,6 +152,7 @@ TEST(BPlusTreeTests, InsertTest2) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+  LOG_DEBUG("InsertTest2 finished===============");
 }
 
 TEST(BPlusTreeTests, DeleteTest1) {
@@ -226,6 +235,7 @@ TEST(BPlusTreeTests, DeleteTest1) {
   delete bpm;
   remove("test.db");
   remove("test.log");
+  LOG_DEBUG("DeleteTest1 finished===============");
 }
 
 TEST(BPlusTreeTests, DeleteTest2) {
@@ -350,6 +360,7 @@ TEST(BPlusTreeTests, ScaleTest) {
     int64_t value = key & 0xFFFFFFFF;
     EXPECT_EQ(rids[0].GetSlotNum(), value);
   }
+  LOG_DEBUG("ScaleTest GetValue() finished===================");
 
   int64_t start_key = 1;
   int64_t current_key = start_key;
@@ -359,6 +370,7 @@ TEST(BPlusTreeTests, ScaleTest) {
     current_key = current_key + 1;
   }
   EXPECT_EQ(current_key, keys.size() + 1);
+  LOG_DEBUG("ScaleTest Iterator() finished===================");
 
   int64_t remove_scale = 9900;
   std::vector<int64_t> remove_keys;

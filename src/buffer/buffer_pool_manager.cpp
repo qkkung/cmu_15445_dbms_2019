@@ -1,4 +1,5 @@
 #include "buffer/buffer_pool_manager.h"
+#include "common/logger.h"
 
 namespace cmudb {
 
@@ -22,6 +23,8 @@ BufferPoolManager::BufferPoolManager(size_t pool_size,
   for (size_t i = 0; i < pool_size_; ++i) {
     free_list_->push_back(&pages_[i]);
   }
+  LOG_DEBUG("free_list size:%lu", free_list_->size());
+  LOG_DEBUG("pool_size:%lu", pool_size_);
 }
 
 /*
@@ -90,6 +93,9 @@ bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     return false;
   }
   pagePtr->pin_count_--;
+  if (pagePtr->is_dirty_ && !is_dirty) {
+    disk_manager_->WritePage(page_id, pagePtr->GetData());
+  }
   pagePtr->is_dirty_ = is_dirty;
   if (pagePtr->pin_count_ == 0) {
     replacer_->Insert(pagePtr);
@@ -166,6 +172,7 @@ Page *BufferPoolManager::NewPage(page_id_t &page_id) {
 
   page_id = disk_manager_->AllocatePage();
   pagePtr->page_id_ = page_id;
+  LOG_DEBUG("NewPage() page id:%d", pagePtr->page_id_);
   pagePtr->is_dirty_ = true;
   pagePtr->pin_count_ = 1;
   pagePtr->ResetMemory();
@@ -192,6 +199,22 @@ Page *BufferPoolManager::findUnusedPage() {
     return pagePtr;
   }
   return nullptr;
+}
+
+void BufferPoolManager::GetPinPages(std::map<page_id_t, int> &m) {
+  for (size_t i = 0; i < pool_size_; i++) {
+    if (pages_[i].GetPageId() != INVALID_PAGE_ID && pages_[i].GetPinCount() > 0) {
+      m[pages_[i].GetPageId()] = pages_[i].GetPinCount();
+    }
+  }
+}
+
+int BufferPoolManager::GetReplacerSize() {
+  return replacer_->Size();
+}
+
+int BufferPoolManager::GetFreeListSize() {
+  return free_list_->size();
 }
 
 } // namespace cmudb

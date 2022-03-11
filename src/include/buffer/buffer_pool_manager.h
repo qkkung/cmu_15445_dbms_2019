@@ -34,6 +34,11 @@ public:
 
   bool DeletePage(page_id_t page_id);
 
+  // only for test purpose
+  void GetPinPages(std::map<page_id_t, int> &m);
+  int GetReplacerSize();
+  int GetFreeListSize();
+
 private:
   size_t pool_size_; // number of pages in buffer pool
   Page *pages_;      // array of pages

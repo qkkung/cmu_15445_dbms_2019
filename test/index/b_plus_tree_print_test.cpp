@@ -21,6 +21,8 @@ std::string usageMessage() {
       "\tf <filename>  -- insert keys bying reading file.\n"
       "\td <filename>  -- delete keys bying reading file.\n"
       "\ta <k>  -- Delete key <k> and its associated value.\n"
+      "\tg <k>  -- get key <k> and its associated value.\n"
+      "\tp <id>  -- test <k> page id and its b plus tree page id.\n"
       "\tr <k1> <k2> -- Print the keys and values found in the range [<k1>, "
       "<k2>]\n"
       "\tx -- Destroy the whole tree.  Start again with an empty tree of the "
@@ -38,7 +40,9 @@ TEST(BptTreeTest, UnitTest) {
   std::string filename;
   char instruction;
   bool quit = false;
-  bool verbose = false;
+  bool verbose = true;
+  std::vector<RID> vec;
+  bool is_exist = false;
 
   std::cout << usageMessage();
   // create KeyComparator and index schema
@@ -47,10 +51,11 @@ TEST(BptTreeTest, UnitTest) {
   GenericComparator<8> comparator(key_schema);
 
   DiskManager *disk_manager = new DiskManager("test.db");
-  BufferPoolManager *bpm = new BufferPoolManager(100, disk_manager);
+  BufferPoolManager *bpm = new BufferPoolManager(300, disk_manager);
   // create and fetch header_page
   page_id_t page_id;
   auto header_page = bpm->NewPage(page_id);
+  LOG_DEBUG("header page id:%d, pin count:%d", header_page->GetPageId(), header_page->GetPinCount());
   (void)header_page;
   // create b+ tree
   BPlusTree<GenericKey<8>, RID, GenericComparator<8>> tree("foo_pk", bpm,
@@ -98,12 +103,31 @@ TEST(BptTreeTest, UnitTest) {
       break;
     case 'v':
       verbose = !verbose;
-      tree.ToString(verbose);
+      std::cout << tree.ToString(verbose);
       break;
     // case 'x':
     //   tree.destroyTree();
     //   tree.print();
     //   break;
+    case 't':
+      std::cout << tree.ToString(verbose);
+      break;
+    case 'g':
+      std::cin >> key;
+      index_key.SetFromInteger(key);
+      is_exist = tree.GetValue(index_key, vec);
+      std::cout << "isExist: " << is_exist << std::endl;
+      if (is_exist) {
+        for (unsigned int i = 0; i < vec.size(); i++) {
+          std::cout << vec.front().ToString()<<"  ";
+          vec.erase(vec.begin());
+        }
+      }
+      break;
+    case 'p':
+      std::cin >> page_id;
+      std::cout << tree.PrintPageId(page_id);
+      break;
     case '?':
       std::cout << usageMessage();
       break;

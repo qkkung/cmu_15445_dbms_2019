@@ -58,9 +58,19 @@ public:
   // read data from file and remove one by one
   void RemoveFromFile(const std::string &file_name,
                       Transaction *transaction = nullptr);
+
+  // expose for test purpose
+  std::string PrintPageId(page_id_t page_id);
+
   // expose for test purpose
   B_PLUS_TREE_LEAF_PAGE_TYPE *FindLeafPage(const KeyType &key,
+                                            OperationType operation,
+                                            Transaction *transaction,
                                            bool leftMost = false);
+  // expose for test purpose
+  void PopulateNewRoot(BPlusTreePage* old_node,
+                        const KeyType& key,
+                        BPlusTreePage* new_node);
 
 private:
   void StartNewTree(const KeyType &key, const ValueType &value);
@@ -79,21 +89,34 @@ private:
 
   template <typename N>
   bool Coalesce(
-      N *&neighbor_node, N *&node,
-      BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *&parent,
+      bool isLeftNeighbor,
+      N *neighbor_node, N *node,
+      BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator> *parent,
       int index, Transaction *transaction = nullptr);
 
-  template <typename N> void Redistribute(N *neighbor_node, N *node, int index);
+  template <typename N> void Redistribute(bool isLeftNeighbor, N *neighbor_node, N *node, int index);
 
-  bool AdjustRoot(BPlusTreePage *node);
+  bool AdjustRoot(BPlusTreePage *node, Transaction *transaction);
 
   void UpdateRootPageId(int insert_record = false);
+
+  Page* GetPage(page_id_t page_id, std::string msg);
+
+  template <typename N>
+  bool FindNeighbor(N* node, N*& Neighbor_node, BPInternalPage*& parent_node, int& index);
+
+  void GetPageLatch(Page* page, OperationType operation, Transaction *transaction);
+
+  void UnlatchAndUnpinPages(Transaction* transaction, OperationType type);
+  
+  void DeletePages(Transaction *transaction, OperationType type);
 
   // member variable
   std::string index_name_;
   page_id_t root_page_id_;
   BufferPoolManager *buffer_pool_manager_;
   KeyComparator comparator_;
+  std::mutex root_id_mutex_;
 };
 
 } // namespace cmudb
