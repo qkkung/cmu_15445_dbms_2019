@@ -108,7 +108,7 @@ void DiskManager::WriteLog(char *log_data, int size) {
   // enforce swap log buffer
   assert(log_data != buffer_used);
   buffer_used = log_data;
-
+  LOG_DEBUG("file size is %d, write_size:%d", GetFileSize(log_name_), size);
   if (size == 0) // no effect on num_flushes_ if log buffer is empty
     return;
 
@@ -148,6 +148,7 @@ bool DiskManager::ReadLog(char *log_data, int size, int offset) {
   log_io_.read(log_data, size);
   // if log file ends before reading "size"
   int read_count = log_io_.gcount();
+  LOG_DEBUG("file size is %d, read_count:%d, required_size:%d", GetFileSize(log_name_), read_count, size);
   if (read_count < size) {
     log_io_.clear();
     memset(log_data + read_count, 0, size - read_count);

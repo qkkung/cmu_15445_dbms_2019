@@ -13,6 +13,10 @@ Transaction *TransactionManager::Begin() {
 
   if (ENABLE_LOGGING) {
     // TODO: write log and update transaction's prev_lsn here
+    LogRecord log_record(txn->GetTransactionId(), txn->GetPrevLSN(), LogRecordType::BEGIN);
+    lsn_t cur_lsn = log_manager_->AppendLogRecord(log_record);
+    //LOG_DEBUG("AppendLogRecord() finished");
+    txn->SetPrevLSN(cur_lsn);
   }
 
   return txn;
@@ -35,6 +39,12 @@ void TransactionManager::Commit(Transaction *txn) {
 
   if (ENABLE_LOGGING) {
     // TODO: write log and update transaction's prev_lsn here
+    LogRecord log_record(txn->GetTransactionId(), txn->GetPrevLSN(), LogRecordType::COMMIT);
+    lsn_t cur_lsn = log_manager_->AppendLogRecord(log_record);
+    txn->SetPrevLSN(cur_lsn);
+
+    // current thread will blocked until cur_lsn is written into disk
+    log_manager_->WaitLogIntoDisk(cur_lsn, false);
   }
 
   // release all the lock
@@ -72,6 +82,12 @@ void TransactionManager::Abort(Transaction *txn) {
 
   if (ENABLE_LOGGING) {
     // TODO: write log and update transaction's prev_lsn here
+    LogRecord log_record(txn->GetTransactionId(), txn->GetPrevLSN(), LogRecordType::ABORT);
+    lsn_t cur_lsn = log_manager_->AppendLogRecord(log_record);
+    txn->SetPrevLSN(cur_lsn);
+
+    // current thread will blocked until cur_lsn is written into disk
+    log_manager_->WaitLogIntoDisk(cur_lsn, false);
   }
 
   // release all the lock

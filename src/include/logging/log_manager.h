@@ -19,7 +19,7 @@ namespace cmudb {
 class LogManager {
 public:
   LogManager(DiskManager *disk_manager)
-      : next_lsn_(0), persistent_lsn_(INVALID_LSN),
+      : offset_(0), next_lsn_(0), persistent_lsn_(INVALID_LSN),
         disk_manager_(disk_manager) {
     // TODO: you may intialize your own defined memeber variables here
     log_buffer_ = new char[LOG_BUFFER_SIZE];
@@ -44,9 +44,28 @@ public:
   inline void SetPersistentLSN(lsn_t lsn) { persistent_lsn_ = lsn; }
   inline char *GetLogBuffer() { return log_buffer_; }
 
+  // wait lsn log record is written into disk
+  // usually invoked by Abort() and Commit() in txn
+  void WaitLogIntoDisk(lsn_t lsn, bool force_flush);
+
 private:
   // TODO: you may add your own member variables
   // also remember to change constructor accordingly
+
+  void SwapBuffer();
+  //void SwapPromise();
+
+  // offset_ bytes have been saved in log_buffer_, 
+  // new content should append from location log_buffer_ + offset_
+  unsigned int offset_;
+  // insert promises that write commit to log buffer 
+  // std::vector<std::promise<void>*> *insert_promise_;
+  // set return value of promises that have existed in pop_promise_
+  // std::vector<std::promise<void>*> *pop_promise_;
+
+  // log_into_disk_cv_ is used when 
+  // buffer pool is full, lru evict dirty page and commit/abort transaction
+  std::condition_variable log_into_disk_cv_;
 
   // atomic counter, record the next log sequence number
   std::atomic<lsn_t> next_lsn_;

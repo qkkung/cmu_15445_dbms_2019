@@ -11,6 +11,7 @@
 #include "buffer/buffer_pool_manager.h"
 #include "concurrency/lock_manager.h"
 #include "logging/log_record.h"
+#include "page/table_page.h"
 
 namespace cmudb {
 
@@ -36,6 +37,8 @@ public:
 private:
   // TODO: you can add whatever member variable here
   // Don't forget to initialize newly added variable in constructor
+  TablePage* GetTablePage(page_id_t page_id);
+
   DiskManager *disk_manager_;
   BufferPoolManager *buffer_pool_manager_;
   // maintain active transactions and its corresponds latest lsn

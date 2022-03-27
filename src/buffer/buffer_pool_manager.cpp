@@ -190,6 +190,11 @@ Page *BufferPoolManager::findUnusedPage() {
   if (replacer_->Victim(pagePtr)) {
     page_table_->Remove(pagePtr->page_id_);
     if (pagePtr->is_dirty_) {
+      if (ENABLE_LOGGING) {
+        assert(log_manager_ != nullptr);
+        //blocked until content of this page is written into disk
+        log_manager_->WaitLogIntoDisk(pagePtr->GetLSN(), true);
+      }
       disk_manager_->WritePage(pagePtr->page_id_, pagePtr->data_);
       pagePtr->is_dirty_ = false;
     }
